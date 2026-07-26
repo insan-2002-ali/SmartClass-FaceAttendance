@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}
+Admin Dashboard
+{% endblock %}
+
+{% block content %}
+
+<h2 class="mb-4">
+
+    <i class="bi bi-speedometer2"></i>
+
+    Admin Dashboard
+
+</h2>
+
+<div class="row">
+
+    <div class="col-md-3">
+
+        <div class="card text-bg-primary mb-4">
+
+            <div class="card-body">
+
+                <h5>Total Students</h5>
+
+                <h2>0</h2>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card text-bg-success mb-4">
+
+            <div class="card-body">
+
+                <h5>Total Teachers</h5>
+
+                <h2>0</h2>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card text-bg-warning mb-4">
+
+            <div class="card-body">
+
+                <h5>Departments</h5>
+
+                <h2>0</h2>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card text-bg-danger mb-4">
+
+            <div class="card-body">
+
+                <h5>Attendance</h5>
+
+                <h2>0</h2>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="card">
+
+    <div class="card-header">
+
+        <h4>Administrator Information</h4>
+
+    </div>
+
+    <div class="card-body">
+
+        <table class="table table-bordered">
+
+            <tr>
+
+                <th width="200">Full Name</th>
+
+                <td>{{ user.full_name }}</td>
+
+            </tr>
+
+            <tr>
+
+                <th>User ID</th>
+
+                <td>{{ user.user_id }}</td>
+
+            </tr>
+
+            <tr>
+
+                <th>Role</th>
+
+                <td>{{ user.role }}</td>
+
+            </tr>
+
+        </table>
+
+    </div>
+
+</div>
+
+{% endblock %}

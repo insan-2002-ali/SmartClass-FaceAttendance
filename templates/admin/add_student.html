@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Add Student</h2>
+
+<form method="POST">
+
+    <input class="form-control mb-2"
+           name="student_id"
+           placeholder="Student ID"
+           required>
+
+    <input class="form-control mb-2"
+           name="full_name"
+           placeholder="Full Name"
+           required>
+
+    <input class="form-control mb-2"
+           name="department"
+           placeholder="Department">
+
+    <input class="form-control mb-2"
+           name="semester"
+           placeholder="Semester">
+
+    <input class="form-control mb-2"
+           name="email"
+           placeholder="Email">
+
+    <input class="form-control mb-2"
+           name="phone"
+           placeholder="Phone">
+
+    <button class="btn btn-success">
+        Save Student
+    </button>
+
+</form>
+
+{% endblock %}

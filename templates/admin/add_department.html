@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Add Department{% endblock %}
+
+{% block content %}
+
+<div class="card shadow">
+
+    <div class="card-header bg-primary text-white">
+
+        <h3 class="mb-0">
+            <i class="bi bi-building-add"></i>
+            Add New Department
+        </h3>
+
+    </div>
+
+    <div class="card-body">
+
+        {% if error %}
+        <div class="alert alert-danger">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form action="{{ url_for('add_department_page') }}" method="POST">
+
+            <div class="mb-3">
+
+                <label class="form-label">
+
+                    Department Code
+
+                </label>
+
+                <input
+                    type="text"
+                    class="form-control"
+                    name="department_code"
+                    placeholder="Enter Department Code"
+                    required>
+
+            </div>
+
+            <div class="mb-3">
+
+                <label class="form-label">
+
+                    Department Name
+
+                </label>
+
+                <input
+                    type="text"
+                    class="form-control"
+                    name="department_name"
+                    placeholder="Enter Department Name"
+                    required>
+
+            </div>
+
+            <div class="mb-3">
+
+                <label class="form-label">
+
+                    Description
+
+                </label>
+
+                <textarea
+                    class="form-control"
+                    rows="4"
+                    name="description"
+                    placeholder="Enter Description"></textarea>
+
+            </div>
+
+            <button
+                type="submit"
+                class="btn btn-success">
+
+                <i class="bi bi-save"></i>
+
+                Save Department
+
+            </button>
+
+            <a
+                href="{{ url_for('departments') }}"
+                class="btn btn-secondary">
+
+                <i class="bi bi-arrow-left"></i>
+
+                Back
+
+            </a>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}
