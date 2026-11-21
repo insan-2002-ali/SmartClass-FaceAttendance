@@ -1,12 +1,6 @@
-from flask import Flask, render_template, request, redirect, url_for, session
-from config import get_db_connection
-from models.department_model import (
-    add_department,
-    get_departments,
-    get_department_by_id,
-    update_department,
-    delete_department
-)
+
+from flask import Flask
+from config import Config
 import os
 
 
@@ -14,193 +8,73 @@ def create_app():
 
     app = Flask(
         __name__,
-        template_folder=os.path.join(os.path.dirname(__file__), "../templates"),
-        static_folder=os.path.join(os.path.dirname(__file__), "../static"),
+        template_folder=os.path.join(
+            os.path.dirname(__file__),
+            "../templates"
+        ),
+        static_folder=os.path.join(
+            os.path.dirname(__file__),
+            "../static"
+        )
     )
 
-    app.secret_key = "attendance_system_secret_key"
+    # ==========================
+    # Configuration
+    # ==========================
 
-    print("Root Path :", app.root_path)
-    print("Template Path :", app.jinja_loader.searchpath)
+    app.config["SECRET_KEY"] = Config.SECRET_KEY
+    app.config["UPLOAD_FOLDER"] = Config.UPLOAD_FOLDER
+    app.config["FACE_DATA_FOLDER"] = Config.FACE_DATA_FOLDER
+    app.config["MAX_CONTENT_LENGTH"] = Config.MAX_CONTENT_LENGTH
 
-    # =========================
-    # Home
-    # =========================
-    @app.route("/")
-    def home():
-        return redirect(url_for("login"))
+    # ==========================
+    # Create Required Folders
+    # ==========================
 
-    # =========================
-    # Login
-    # =========================
-    @app.route("/login", methods=["GET", "POST"])
-    def login():
+    os.makedirs(
+        app.config["UPLOAD_FOLDER"],
+        exist_ok=True
+    )
 
-        if request.method == "POST":
+    os.makedirs(
+        app.config["FACE_DATA_FOLDER"],
+        exist_ok=True
+    )
 
-            user_id = request.form["user_id"]
-            password = request.form["password"]
+    # ==========================
+    # Import Blueprints
+    # ==========================
 
-            conn = get_db_connection()
-            cursor = conn.cursor(dictionary=True)
+    from app.routes.auth import auth_bp
+    from app.routes.dashboard import dashboard_bp
+    from app.routes.admission_year import admission_year_bp
+    from app.routes.program import program_bp
+    from app.routes.department import department_bp
+    from app.routes.teacher import teacher_bp
+    from app.routes.subject import subject_bp
+    from app.routes.teacher_assignment import teacher_assignment_bp
+    from app.routes.student import student_bp
+    from app.routes.student_enrollment import student_enrollment_bp
+    from app.routes.face_registration import face_registration_bp
+    from app.routes.class_schedule import class_schedule_bp
+    from app.routes.attendance_settings import attendance_settings_bp
 
-            cursor.execute(
-                """
-                SELECT *
-                FROM users
-                WHERE user_id=%s AND password=%s
-                """,
-                (user_id, password)
-            )
+    # ==========================
+    # Register Blueprints
+    # ==========================
 
-            user = cursor.fetchone()
-
-            cursor.close()
-            conn.close()
-
-            if user:
-
-                session["user_id"] = user["user_id"]
-                session["full_name"] = user["full_name"]
-                session["role"] = user["role"]
-
-                if user["role"] == "admin":
-                    return redirect(url_for("admin_dashboard"))
-
-                return "Login Successful"
-
-            return render_template(
-                "auth/login.html",
-                error="Invalid User ID or Password"
-            )
-
-        return render_template("auth/login.html")
-
-    # =========================
-    # Dashboard
-    # =========================
-    @app.route("/admin/dashboard")
-    def admin_dashboard():
-
-        if "user_id" not in session:
-            return redirect(url_for("login"))
-
-        return render_template(
-            "admin/dashboard.html",
-            user=session
-        )
-
-    # =========================
-    # Add Department
-    # =========================
-    @app.route("/add-department", methods=["GET", "POST"])
-    def add_department_page():
-
-        if "user_id" not in session:
-            return redirect(url_for("login"))
-
-        if request.method == "POST":
-
-            department_code = request.form["department_code"]
-            department_name = request.form["department_name"]
-            description = request.form["description"]
-
-            success, message = add_department(
-                department_code,
-                department_name,
-                description
-            )
-
-            if success:
-                return redirect(url_for("departments"))
-
-            return render_template(
-                "admin/add_department.html",
-                error=message
-            )
-
-        return render_template("admin/add_department.html")
-
-    # =========================
-    # Department List
-    # =========================
-    @app.route("/departments")
-    def departments():
-
-        if "user_id" not in session:
-            return redirect(url_for("login"))
-
-        departments = get_departments()
-
-        return render_template(
-            "admin/departments.html",
-            departments=departments
-        )
-
-    # =========================
-    # Edit Department
-    # =========================
-    @app.route("/edit-department/<int:department_id>", methods=["GET", "POST"])
-    def edit_department(department_id):
-
-        if "user_id" not in session:
-            return redirect(url_for("login"))
-
-        department = get_department_by_id(department_id)
-
-        if not department:
-            return redirect(url_for("departments"))
-
-        if request.method == "POST":
-
-            department_code = request.form["department_code"]
-            department_name = request.form["department_name"]
-            description = request.form["description"]
-
-            success, message = update_department(
-                department_id,
-                department_code,
-                department_name,
-                description
-            )
-
-            if success:
-                return redirect(url_for("departments"))
-
-            department = get_department_by_id(department_id)
-
-            return render_template(
-                "admin/edit_department.html",
-                department=department,
-                error=message
-            )
-
-        return render_template(
-            "admin/edit_department.html",
-            department=department
-        )
-
-    # =========================
-    # Delete Department
-    # =========================
-    @app.route("/delete-department/<int:department_id>")
-    def delete_department_route(department_id):
-
-        if "user_id" not in session:
-            return redirect(url_for("login"))
-
-        delete_department(department_id)
-
-        return redirect(url_for("departments"))
-
-    # =========================
-    # Logout
-    # =========================
-    @app.route("/logout")
-    def logout():
-
-        session.clear()
-
-        return redirect(url_for("login"))
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(dashboard_bp)
+    app.register_blueprint(admission_year_bp)
+    app.register_blueprint(program_bp)
+    app.register_blueprint(department_bp)
+    app.register_blueprint(teacher_bp)
+    app.register_blueprint(subject_bp)
+    app.register_blueprint(teacher_assignment_bp)
+    app.register_blueprint(student_bp)
+    app.register_blueprint(student_enrollment_bp)
+    app.register_blueprint(face_registration_bp)
+    app.register_blueprint(class_schedule_bp)
+    app.register_blueprint(attendance_settings_bp)
 
     return app

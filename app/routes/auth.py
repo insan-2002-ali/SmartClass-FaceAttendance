@@ -1,37 +1,38 @@
-from flask import (
-    Blueprint,
-    render_template,
-    request,
-    redirect,
-    url_for,
-    session,
-    flash
-)
-
+from flask import Blueprint, render_template, request, redirect, url_for, session
 from config import get_db_connection
 
-auth = Blueprint("auth", __name__)
+auth_bp = Blueprint("auth", __name__)
 
 
-@auth.route("/", methods=["GET", "POST"])
+@auth_bp.route("/")
+def home():
+    return redirect(url_for("auth.login"))
+
+
+@auth_bp.route("/login", methods=["GET", "POST"])
 def login():
 
     if request.method == "POST":
 
-        user_id = request.form.get("user_id")
-        password = request.form.get("password")
+        username = request.form["user_id"].strip()
+        password = request.form["password"]
 
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
 
-        sql = """
-        SELECT *
-        FROM users
-        WHERE user_id = %s
-        AND password = %s
-        """
-
-        cursor.execute(sql, (user_id, password))
+        cursor.execute(
+            """
+            SELECT *
+            FROM users
+            WHERE username=%s
+            AND password=%s
+            AND status='Active'
+            """,
+            (
+                username,
+                password
+            )
+        )
 
         user = cursor.fetchone()
 
@@ -40,22 +41,31 @@ def login():
 
         if user:
 
-            session["user_id"] = user["user_id"]
+            session["user_id"] = user["id"]
+            session["username"] = user["username"]
             session["full_name"] = user["full_name"]
             session["role"] = user["role"]
 
-            return redirect(url_for("dashboard.home"))
+            if user["role"] == "Admin":
+                return redirect(url_for("dashboard.admin_dashboard"))
 
-        flash("Invalid User ID or Password", "danger")
+            elif user["role"] == "Teacher":
+                return "Teacher Dashboard"
+
+            elif user["role"] == "Student":
+                return "Student Dashboard"
+
+        return render_template(
+            "auth/login.html",
+            error="Invalid Username or Password"
+        )
 
     return render_template("auth/login.html")
 
 
-@auth.route("/logout")
+@auth_bp.route("/logout")
 def logout():
 
     session.clear()
-
-    flash("You have logged out successfully.", "success")
 
     return redirect(url_for("auth.login"))

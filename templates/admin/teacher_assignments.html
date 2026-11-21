@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+
+{% block title %}
+Teacher Assignment Management
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h2>
+
+                <i class="bi bi-diagram-3-fill"></i>
+
+                Teacher Assignment Management
+
+            </h2>
+
+            <p class="text-muted">
+
+                Total Assignments :
+
+                <span class="badge bg-primary">
+
+                    {{ assignments|length }}
+
+                </span>
+
+            </p>
+
+        </div>
+
+        <a
+            href="{{ url_for('teacher_assignment.add_teacher_assignment') }}"
+            class="btn btn-primary">
+
+            <i class="bi bi-plus-circle"></i>
+
+            Assign Teacher
+
+        </a>
+
+    </div>
+
+
+    <div class="card shadow mb-4">
+
+        <div class="card-body">
+
+            <form method="GET">
+
+                <div class="row g-2">
+
+                    <div class="col-md-4">
+
+                        <input
+                            type="text"
+                            name="keyword"
+                            class="form-control"
+                            placeholder="Search Teacher / Subject / Department"
+                            value="{{ keyword }}">
+
+                    </div>
+
+                    <div class="col-md-2">
+
+                        <select
+                            name="teacher_id"
+                            class="form-select">
+
+                            <option value="">
+
+                                All Teachers
+
+                            </option>
+
+                            {% for teacher in teachers %}
+
+                            <option
+                                value="{{ teacher.id }}"
+                                {% if teacher_id|string==teacher.id|string %}
+                                selected
+                                {% endif %}>
+
+                                {{ teacher.full_name }}
+
+                            </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+                    <div class="col-md-2">
+
+                        <select
+                            name="department_id"
+                            class="form-select">
+
+                            <option value="">
+
+                                All Departments
+
+                            </option>
+
+                            {% for department in departments %}
+
+                            <option
+                                value="{{ department.id }}"
+                                {% if department_id|string==department.id|string %}
+                                selected
+                                {% endif %}>
+
+                                {{ department.department_name }}
+
+                            </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+                    <div class="col-md-2">
+
+                        <select
+                            name="semester"
+                            class="form-select">
+
+                            <option value="">
+
+                                Semester
+
+                            </option>
+
+                            {% for i in range(1,9) %}
+
+                            <option
+                                value="{{ i }}"
+                                {% if semester|string==i|string %}
+                                selected
+                                {% endif %}>
+
+                                Semester {{ i }}
+
+                            </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+                    <div class="col-md-2 d-grid">
+
+                        <button
+                            class="btn btn-success">
+
+                            <i class="bi bi-search"></i>
+
+                            Search
+
+                        </button>
+
+                    </div>
+
+                    <div class="col-md-2 d-grid mt-2">
+
+                        <a
+                            href="{{ url_for('teacher_assignment.teacher_assignments') }}"
+                            class="btn btn-secondary">
+
+                            Reset
+
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow">
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+
+                <table class="table table-bordered table-hover align-middle">
+
+                    <thead class="table-dark">
+
+                        <tr>
+
+                            <th>SL</th>
+                            <th>Teacher</th>
+                            <th>Department</th>
+                            <th>Subject</th>
+                            <th>Admission Year</th>
+                            <th>Semester</th>
+                            <th>Section</th>
+                            <th>Academic Year</th>
+                            <th>Status</th>
+                            <th width="150">Action</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                    {% if assignments %}
+
+                        {% for assignment in assignments %}
+
+                        <tr>
+
+                            <td>{{ loop.index }}</td>
+
+                            <td>{{ assignment.teacher_name }}</td>
+
+                            <td>{{ assignment.department_name }}</td>
+
+                            <td>{{ assignment.subject_name }}</td>
+
+                            <td>{{ assignment.year }}</td>
+
+                            <td>Semester {{ assignment.semester }}</td>
+
+                            <td>{{ assignment.section }}</td>
+
+                            <td>{{ assignment.academic_year }}</td>
+
+                            <td>
+
+                                {% if assignment.status=="Active" %}
+
+                                <span class="badge bg-success">
+
+                                    Active
+
+                                </span>
+
+                                {% else %}
+
+                                <span class="badge bg-danger">
+
+                                    Inactive
+
+                                </span>
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+
+                                <a
+                                    href="{{ url_for('teacher_assignment.edit_teacher_assignment', id=assignment.id) }}"
+                                    class="btn btn-warning btn-sm">
+
+                                    <i class="bi bi-pencil-square"></i>
+
+                                </a>
+
+                                <a
+                                    href="{{ url_for('teacher_assignment.delete_teacher_assignment', id=assignment.id) }}"
+                                    class="btn btn-danger btn-sm"
+                                    onclick="return confirm('Delete this assignment?')">
+
+                                    <i class="bi bi-trash"></i>
+
+                                </a>
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    {% else %}
+
+                        <tr>
+
+                            <td colspan="10" class="text-center text-danger">
+
+                                No Teacher Assignment Found
+
+                            </td>
+
+                        </tr>
+
+                    {% endif %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

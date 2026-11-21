@@ -1,0 +1,362 @@
+
+import os
+import cv2
+import time
+import numpy as np
+
+from insightface.app import FaceAnalysis
+
+
+BASE_DIR = os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__))
+)
+
+# Registration and Encoder must use the same dataset folder
+DATASET_DIR = os.path.join(
+    BASE_DIR,
+    "face_data",
+    "dataset"
+)
+
+TOTAL_IMAGES = 50
+FACE_SIZE = 640
+FACE_MARGIN = 80
+CAPTURE_DELAY = 0.5
+
+GUIDES = [
+    "Look Straight",
+    "Turn Left",
+    "Turn Right",
+    "Look Up",
+    "Look Down"
+]
+
+
+app = FaceAnalysis(
+    name="buffalo_l"
+)
+
+app.prepare(
+    ctx_id=0,
+    det_size=(640, 640)
+)
+
+
+# ==========================================
+# Create Student Folder
+# ==========================================
+
+def create_student_folder(student_id):
+
+    folder = os.path.join(
+        DATASET_DIR,
+        str(student_id)
+    )
+
+    os.makedirs(
+        folder,
+        exist_ok=True
+    )
+
+    return folder
+
+
+# ==========================================
+# Open Camera
+# ==========================================
+
+def open_camera():
+
+    camera = cv2.VideoCapture(0)
+
+    if not camera.isOpened():
+
+        raise Exception(
+            "Cannot open webcam."
+        )
+
+    return camera
+
+
+# ==========================================
+# Blur Detection
+# ==========================================
+
+def is_blurry(image, threshold=80):
+
+    gray = cv2.cvtColor(
+        image,
+        cv2.COLOR_BGR2GRAY
+    )
+
+    score = cv2.Laplacian(
+        gray,
+        cv2.CV_64F
+    ).var()
+
+    return score < threshold
+
+
+# ==========================================
+# Face Size Check
+# ==========================================
+
+def valid_face(face):
+
+    h, w = face.shape[:2]
+
+    if h < 250 or w < 250:
+
+        return False
+
+    return True
+
+
+# ==========================================
+# Registration Screen
+# ==========================================
+
+def draw_screen(
+    frame,
+    student_id,
+    count,
+    instruction
+):
+
+    cv2.rectangle(
+        frame,
+        (10, 10),
+        (650, 130),
+        (40, 40, 40),
+        -1
+    )
+
+    cv2.putText(
+        frame,
+        "AI FACE REGISTRATION",
+        (25, 40),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.8,
+        (0, 255, 255),
+        2
+    )
+
+    cv2.putText(
+        frame,
+        f"Student : {student_id}",
+        (25, 75),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.7,
+        (255, 255, 255),
+        2
+    )
+
+    cv2.putText(
+        frame,
+        f"Instruction : {instruction}",
+        (25, 105),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.7,
+        (0, 255, 0),
+        2
+    )
+
+    cv2.putText(
+        frame,
+        f"Captured : {count}/{TOTAL_IMAGES}",
+        (20, frame.shape[0] - 20),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.8,
+        (0, 255, 255),
+        2
+    )
+
+    return frame
+
+
+# ==========================================
+# Capture Student Faces
+# ==========================================
+
+def capture_student_faces(student_id):
+
+    save_folder = create_student_folder(student_id)
+
+    camera = open_camera()
+
+    image_count = 0
+
+    last_capture = time.time()
+
+    print("Starting Face Registration...")
+    print("Dataset Folder:", save_folder)
+
+    try:
+
+        while True:
+
+            success, frame = camera.read()
+
+            if not success:
+                break
+
+            instruction = GUIDES[
+                min(image_count // 10, 4)
+            ]
+
+            frame = draw_screen(
+                frame,
+                student_id,
+                image_count,
+                instruction
+            )
+
+            faces = app.get(frame)
+
+            if len(faces) > 0:
+
+                face = max(
+                    faces,
+                    key=lambda x:
+                    (x.bbox[2] - x.bbox[0]) *
+                    (x.bbox[3] - x.bbox[1])
+                )
+
+                x1, y1, x2, y2 = map(
+                    int,
+                    face.bbox
+                )
+
+                x1 = max(0, x1 - FACE_MARGIN)
+                y1 = max(0, y1 - FACE_MARGIN)
+                x2 = min(frame.shape[1], x2 + FACE_MARGIN)
+                y2 = min(frame.shape[0], y2 + FACE_MARGIN)
+
+                cv2.rectangle(
+                    frame,
+                    (x1, y1),
+                    (x2, y2),
+                    (0, 255, 0),
+                    3
+                )
+
+                face_image = frame[
+                    y1:y2,
+                    x1:x2
+                ]
+
+                if face_image.size != 0:
+
+                    if valid_face(face_image):
+
+                        if not is_blurry(face_image):
+
+                            if time.time() - last_capture > CAPTURE_DELAY:
+
+                                face_image = cv2.resize(
+                                    face_image,
+                                    (FACE_SIZE, FACE_SIZE)
+                                )
+
+                                filename = os.path.join(
+                                    save_folder,
+                                    f"{image_count + 1}.jpg"
+                                )
+
+                                saved = cv2.imwrite(
+                                    filename,
+                                    face_image
+                                )
+
+                                if saved:
+
+                                    image_count += 1
+                                    last_capture = time.time()
+
+                        else:
+
+                            cv2.putText(
+                                frame,
+                                "Image Blurry",
+                                (20, 170),
+                                cv2.FONT_HERSHEY_SIMPLEX,
+                                0.8,
+                                (0, 0, 255),
+                                2
+                            )
+
+                    else:
+
+                        cv2.putText(
+                            frame,
+                            "Move Closer",
+                            (20, 170),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            0.8,
+                            (0, 0, 255),
+                            2
+                        )
+
+            cv2.imshow(
+                "AI Face Registration",
+                frame
+            )
+
+            key = cv2.waitKey(1)
+
+            if key == 27 or key == ord("q"):
+                break
+
+            if image_count >= TOTAL_IMAGES:
+                break
+
+    finally:
+
+        camera.release()
+        cv2.destroyAllWindows()
+
+    print("Registration Completed")
+    print(f"Images Captured: {image_count}/{TOTAL_IMAGES}")
+
+    return image_count == TOTAL_IMAGES
+
+
+# ==========================================
+# Main Function
+# ==========================================
+
+if __name__ == "__main__":
+
+    print("=" * 60)
+    print("AI Face Registration System")
+    print("=" * 60)
+
+    student_id = input(
+        "Enter Student ID : "
+    ).strip()
+
+    if student_id == "":
+
+        print("Student ID is required.")
+
+    else:
+
+        success = capture_student_faces(
+            student_id
+        )
+
+        if success:
+
+            print("\n" + "=" * 60)
+            print("Face Registration Completed Successfully")
+            print(f"Student ID : {student_id}")
+            print(f"Images Captured : {TOTAL_IMAGES}")
+            print("=" * 60)
+
+            print("\nNext Step:")
+            print("python -m services.face_encoder")
+
+        else:
+
+            print("\nFace Registration was incomplete.")
+            print("Please register the student again.")

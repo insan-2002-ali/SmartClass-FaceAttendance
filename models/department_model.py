@@ -2,7 +2,108 @@ from config import get_db_connection
 import mysql.connector
 
 
-def add_department(department_code, department_name, description):
+def get_all_programs():
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT
+            p.id,
+            p.program_name,
+            p.program_code,
+            p.degree,
+            ay.year AS admission_year
+        FROM programs p
+        INNER JOIN admission_years ay
+            ON ay.id = p.admission_year_id
+        WHERE p.status='Active'
+        ORDER BY
+            ay.year DESC,
+            p.program_name ASC
+    """)
+
+    programs = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return programs
+
+
+def get_all_departments(
+    search="",
+    program="",
+    status=""
+):
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    sql = """
+        SELECT
+            d.*,
+            p.program_name,
+            p.program_code,
+            p.degree,
+            ay.year AS admission_year
+        FROM departments d
+        INNER JOIN programs p
+            ON d.program_id = p.id
+        INNER JOIN admission_years ay
+            ON p.admission_year_id = ay.id
+        WHERE 1=1
+    """
+
+    values = []
+
+    if search:
+
+        sql += """
+            AND (
+                d.department_code LIKE %s
+                OR d.department_name LIKE %s
+            )
+        """
+
+        keyword = f"%{search}%"
+
+        values.extend([keyword, keyword])
+
+    if program:
+
+        sql += " AND d.program_id=%s"
+
+        values.append(program)
+
+    if status:
+
+        sql += " AND d.status=%s"
+
+        values.append(status)
+
+    sql += """
+        ORDER BY
+            ay.year DESC,
+            p.program_name ASC,
+            d.department_name ASC
+    """
+
+    cursor.execute(sql, values)
+
+    departments = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return departments
+def add_department(
+    program_id,
+    department_code,
+    department_name,
+    description,
+    status
+):
 
     conn = None
     cursor = None
@@ -12,31 +113,52 @@ def add_department(department_code, department_name, description):
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        sql = """
-        INSERT INTO departments
-        (department_code, department_name, description)
-        VALUES (%s, %s, %s)
+        check_sql = """
+            SELECT id
+            FROM departments
+            WHERE program_id=%s
+            AND department_code=%s
         """
 
         cursor.execute(
-            sql,
+            check_sql,
             (
+                program_id,
+                department_code
+            )
+        )
+
+        if cursor.fetchone():
+
+            return False, "Department Code already exists."
+
+        insert_sql = """
+            INSERT INTO departments
+            (
+                program_id,
                 department_code,
                 department_name,
-                description
+                description,
+                status
+            )
+            VALUES
+            (%s,%s,%s,%s,%s)
+        """
+
+        cursor.execute(
+            insert_sql,
+            (
+                program_id,
+                department_code,
+                department_name,
+                description,
+                status
             )
         )
 
         conn.commit()
 
         return True, "Department added successfully."
-
-    except mysql.connector.IntegrityError:
-
-        if conn:
-            conn.rollback()
-
-        return False, "Department Code already exists."
 
     except mysql.connector.Error as err:
 
@@ -52,25 +174,6 @@ def add_department(department_code, department_name, description):
 
         if conn and conn.is_connected():
             conn.close()
-
-
-def get_departments():
-
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-
-    cursor.execute("""
-        SELECT *
-        FROM departments
-        ORDER BY id DESC
-    """)
-
-    departments = cursor.fetchall()
-
-    cursor.close()
-    conn.close()
-
-    return departments
 
 
 def get_department_by_id(department_id):
@@ -93,13 +196,13 @@ def get_department_by_id(department_id):
     conn.close()
 
     return department
-
-
 def update_department(
-        department_id,
-        department_code,
-        department_name,
-        description
+    department_id,
+    program_id,
+    department_code,
+    department_name,
+    description,
+    status
 ):
 
     conn = None
@@ -110,19 +213,46 @@ def update_department(
         conn = get_db_connection()
         cursor = conn.cursor()
 
+        check_sql = """
+            SELECT id
+            FROM departments
+            WHERE program_id=%s
+            AND department_code=%s
+            AND id<>%s
+        """
+
         cursor.execute(
-            """
+            check_sql,
+            (
+                program_id,
+                department_code,
+                department_id
+            )
+        )
+
+        if cursor.fetchone():
+
+            return False, "Department Code already exists."
+
+        update_sql = """
             UPDATE departments
             SET
+                program_id=%s,
                 department_code=%s,
                 department_name=%s,
-                description=%s
+                description=%s,
+                status=%s
             WHERE id=%s
-            """,
+        """
+
+        cursor.execute(
+            update_sql,
             (
+                program_id,
                 department_code,
                 department_name,
                 description,
+                status,
                 department_id
             )
         )
@@ -130,13 +260,6 @@ def update_department(
         conn.commit()
 
         return True, "Department updated successfully."
-
-    except mysql.connector.IntegrityError:
-
-        if conn:
-            conn.rollback()
-
-        return False, "Department Code already exists."
 
     except mysql.connector.Error as err:
 

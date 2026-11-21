@@ -1,0 +1,263 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>{{ "Edit Class Routine" if schedule else "Add Class Routine" }}</h2>
+            <p class="text-muted mb-0">
+                Configure the weekly class timetable.
+            </p>
+        </div>
+
+        <a href="{{ url_for('class_schedule.class_schedules') }}"
+           class="btn btn-secondary">
+            Back to Routines
+        </a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="btn-close"
+                            data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h5 class="mb-0">Routine Information</h5>
+        </div>
+
+        <div class="card-body">
+
+            <form method="POST"
+                  action="{% if schedule %}{{ url_for('class_schedule.edit_class_schedule', id=schedule.id) }}{% else %}{{ url_for('class_schedule.add_class_schedule') }}{% endif %}">
+
+                <h5 class="mb-3">Class Selection</h5>
+
+                <div class="mb-3">
+                    <label for="class_id" class="form-label">
+                        Class <span class="text-danger">*</span>
+                    </label>
+
+                    <select id="class_id"
+                            name="class_id"
+                            class="form-select"
+                            required>
+
+                        <option value="">Select Class</option>
+
+                        {% for class_item in classes %}
+                            <option value="{{ class_item.id }}"
+                                {% if schedule and schedule.class_id|string == class_item.id|string %}selected{% endif %}>
+
+                                {{ class_item.class_code }} -
+                                {{ class_item.class_name }}
+                                | {{ class_item.subject_name }}
+                                | Section {{ class_item.section }}
+                                | {{ class_item.teacher_name }}
+                                {% if class_item.department_name %}
+                                    | {{ class_item.department_name }}
+                                {% endif %}
+
+                            </option>
+                        {% endfor %}
+
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label for="day_of_week" class="form-label">
+                        Day of Week <span class="text-danger">*</span>
+                    </label>
+
+                    <select id="day_of_week"
+                            name="day_of_week"
+                            class="form-select"
+                            required>
+
+                        <option value="">Select Day</option>
+
+                        {% for day in days %}
+                            <option value="{{ day }}"
+                                {% if schedule and schedule.day_of_week == day %}selected{% endif %}>
+                                {{ day }}
+                            </option>
+                        {% endfor %}
+
+                    </select>
+                </div>
+
+                <hr>
+
+                <h5 class="mb-3">Class Timing</h5>
+
+                <div class="row">
+
+                    <div class="col-md-4 mb-3">
+                        <label for="start_time" class="form-label">
+                            Start Time <span class="text-danger">*</span>
+                        </label>
+
+                        <input type="time"
+                               id="start_time"
+                               name="start_time"
+                               class="form-control"
+                               value="{{ (schedule.start_time|string)[:5] if schedule else '' }}"
+                               required>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label for="end_time" class="form-label">
+                            End Time <span class="text-danger">*</span>
+                        </label>
+
+                        <input type="time"
+                               id="end_time"
+                               name="end_time"
+                               class="form-control"
+                               value="{{ (schedule.end_time|string)[:5] if schedule else '' }}"
+                               required>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label for="duration_display" class="form-label">
+                            Class Duration
+                        </label>
+
+                        <input type="text"
+                               id="duration_display"
+                               class="form-control"
+                               value="0 minutes"
+                               readonly>
+                    </div>
+
+                </div>
+
+                <div class="alert alert-info">
+                    <strong>Automatic Attendance:</strong>
+                    Camera preparation and all three attendance checks
+                    are controlled by the Global Attendance Settings.
+                    You do not need to configure them for each class.
+                </div>
+
+                <hr>
+
+                <h5 class="mb-3">Class Location</h5>
+
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+                        <label for="room_no" class="form-label">
+                            Room Number
+                        </label>
+
+                        <input type="text"
+                               id="room_no"
+                               name="room_no"
+                               class="form-control"
+                               value="{{ schedule.room_no if schedule else '' }}"
+                               placeholder="Example: Lab-101">
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="building" class="form-label">
+                            Building
+                        </label>
+
+                        <input type="text"
+                               id="building"
+                               name="building"
+                               class="form-control"
+                               value="{{ schedule.building if schedule else '' }}"
+                               placeholder="Example: AI Building">
+                    </div>
+
+                </div>
+
+                <div class="mb-4">
+                    <label for="status" class="form-label">
+                        Routine Status
+                    </label>
+
+                    <select id="status"
+                            name="status"
+                            class="form-select">
+
+                        <option value="Active"
+                            {% if not schedule or schedule.status == "Active" %}selected{% endif %}>
+                            Active
+                        </option>
+
+                        <option value="Inactive"
+                            {% if schedule and schedule.status == "Inactive" %}selected{% endif %}>
+                            Inactive
+                        </option>
+
+                    </select>
+                </div>
+
+                <div class="d-flex gap-2">
+
+                    <button type="submit" class="btn btn-primary">
+                        {{ "Update Routine" if schedule else "Save Routine" }}
+                    </button>
+
+                    <a href="{{ url_for('class_schedule.class_schedules') }}"
+                       class="btn btn-secondary">
+                        Cancel
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const startInput = document.getElementById("start_time");
+    const endInput = document.getElementById("end_time");
+    const durationDisplay = document.getElementById("duration_display");
+
+    function updateDuration() {
+
+        if (!startInput.value || !endInput.value) {
+            durationDisplay.value = "0 minutes";
+            return;
+        }
+
+        const startParts = startInput.value.split(":").map(Number);
+        const endParts = endInput.value.split(":").map(Number);
+
+        const start = startParts[0] * 60 + startParts[1];
+        const end = endParts[0] * 60 + endParts[1];
+
+        const duration = end - start;
+
+        durationDisplay.value = duration > 0
+            ? duration + " minutes"
+            : "Invalid time";
+    }
+
+    startInput.addEventListener("change", updateDuration);
+    endInput.addEventListener("change", updateDuration);
+
+    updateDuration();
+
+});
+</script>
+
+{% endblock %}

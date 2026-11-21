@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}
+Add Admission Year
+{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <div class="card shadow">
+
+        <div class="card-header bg-primary text-white">
+
+            <h4>Add Admission Year</h4>
+
+        </div>
+
+        <div class="card-body">
+
+            {% if error %}
+
+            <div class="alert alert-danger">
+
+                {{ error }}
+
+            </div>
+
+            {% endif %}
+
+            <form method="POST">
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+
+                        Admission Year
+
+                    </label>
+
+                    <input
+                        type="number"
+                        name="year"
+                        class="form-control"
+                        min="2000"
+                        max="2100"
+                        required
+                    >
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+
+                        Status
+
+                    </label>
+
+                    <select
+                        name="status"
+                        class="form-select"
+                        required
+                    >
+
+                        <option value="Active">
+
+                            Active
+
+                        </option>
+
+                        <option value="Inactive">
+
+                            Inactive
+
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <button
+                    type="submit"
+                    class="btn btn-success"
+                >
+
+                    Save
+
+                </button>
+
+                <a
+                    href="{{ url_for('admission_year.admission_years') }}"
+                    class="btn btn-secondary"
+                >
+
+                    Cancel
+
+                </a>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+
+{% block title %}
+Programs
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <h2>
+
+        <i class="bi bi-mortarboard-fill"></i>
+
+        Programs
+
+    </h2>
+
+    <a href="{{ url_for('program.add_program_page') }}"
+       class="btn btn-primary">
+
+        <i class="bi bi-plus-circle"></i>
+
+        Add Program
+
+    </a>
+
+</div>
+
+<div class="card shadow mb-3">
+
+    <div class="card-body">
+
+        <form method="GET"
+              action="{{ url_for('program.programs') }}">
+
+            <div class="row g-3">
+
+                <div class="col-lg-3">
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        name="search"
+                        placeholder="Search..."
+                        value="{{ search }}">
+
+                </div>
+
+                <div class="col-lg-3">
+
+                    <select
+                        name="admission_year"
+                        class="form-select">
+
+                        <option value="">All Admission Years</option>
+
+                        {% for year in years %}
+
+                        <option
+                            value="{{ year.id }}"
+                            {% if admission_year == year.id|string %}selected{% endif %}>
+
+                            {{ year.year }}
+
+                        </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+                <div class="col-lg-2">
+
+                    <select
+                        name="degree"
+                        class="form-select">
+
+                        <option value="">All Degrees</option>
+
+                        <option value="Bachelor"
+                            {% if degree == "Bachelor" %}selected{% endif %}>
+                            Bachelor
+                        </option>
+
+                        <option value="Master"
+                            {% if degree == "Master" %}selected{% endif %}>
+                            Master
+                        </option>
+
+                        <option value="PhD"
+                            {% if degree == "PhD" %}selected{% endif %}>
+                            PhD
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-lg-2">
+
+                    <select
+                        name="status"
+                        class="form-select">
+
+                        <option value="">All Status</option>
+
+                        <option value="Active"
+                            {% if status == "Active" %}selected{% endif %}>
+                            Active
+                        </option>
+
+                        <option value="Inactive"
+                            {% if status == "Inactive" %}selected{% endif %}>
+                            Inactive
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-lg-1 d-grid">
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary">
+
+                        <i class="bi bi-search"></i>
+
+                    </button>
+
+                </div>
+
+                <div class="col-lg-1 d-grid">
+
+                    <a href="{{ url_for('program.programs') }}"
+                       class="btn btn-secondary">
+
+                        <i class="bi bi-arrow-clockwise"></i>
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<div class="card shadow">
+
+    <div class="card-body">
+
+        <table class="table table-bordered table-hover align-middle">
+
+            <thead class="table-dark">
+
+                <tr>
+
+                    <th>SL</th>
+
+                    <th>Admission Year</th>
+
+                    <th>Code</th>
+
+                    <th>Program Name</th>
+
+                    <th>Degree</th>
+
+                    <th>Status</th>
+
+                    <th width="180">Action</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                {% if programs %}
+
+                    {% for program in programs %}
+
+                    <tr>
+
+                        <td>{{ loop.index }}</td>
+
+                        <td>{{ program.admission_year }}</td>
+
+                        <td>{{ program.program_code }}</td>
+
+                        <td>{{ program.program_name }}</td>
+
+                        <td>{{ program.degree }}</td>
+
+                        <td>
+
+                            {% if program.status == "Active" %}
+
+                                <span class="badge bg-success">
+
+                                    Active
+
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge bg-danger">
+
+                                    Inactive
+
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+
+                            <a href="{{ url_for('program.edit_program_page', program_id=program.id) }}"
+                               class="btn btn-warning btn-sm">
+
+                                <i class="bi bi-pencil-square"></i>
+
+                            </a>
+
+                            <a href="{{ url_for('program.delete_program_page', program_id=program.id) }}"
+                               class="btn btn-danger btn-sm"
+                               onclick="return confirm('Delete this program?')">
+
+                                <i class="bi bi-trash"></i>
+
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                {% else %}
+
+                    <tr>
+
+                        <td colspan="7"
+                            class="text-center">
+
+                            No Programs Found
+
+                        </td>
+
+                    </tr>
+
+                {% endif %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+{% endblock %}

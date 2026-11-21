@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}
+Enroll Student
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+
+    <div class="card shadow">
+
+        <div class="card-header bg-primary text-white">
+
+            <h3>
+
+                <i class="bi bi-person-plus-fill"></i>
+
+                Student Enrollment
+
+            </h3>
+
+        </div>
+
+        <div class="card-body">
+
+            <form method="POST">
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+
+                        Student
+
+                    </label>
+
+                    <select
+                        name="student_id"
+                        class="form-select"
+                        required>
+
+                        <option value="">
+
+                            Select Student
+
+                        </option>
+
+                        {% for student in students %}
+
+                        <option value="{{ student.id }}">
+
+                            {{ student.student_id }} - {{ student.full_name }}
+
+                        </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+
+                        Teacher Assignment
+
+                    </label>
+
+                    <select
+                        name="teacher_assignment_id"
+                        class="form-select"
+                        required>
+
+                        <option value="">
+
+                            Select Assignment
+
+                        </option>
+
+                        {% for assignment in assignments %}
+
+                        <option value="{{ assignment.id }}">
+
+                            {{ assignment.subject_name }}
+                            |
+                            {{ assignment.teacher_name }}
+                            |
+                            {{ assignment.department_name }}
+                            |
+                            Year {{ assignment.year }}
+                            |
+                            Semester {{ assignment.semester }}
+                            |
+                            Section {{ assignment.section }}
+
+                        </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+
+                        Status
+
+                    </label>
+
+                    <select
+                        name="status"
+                        class="form-select">
+
+                        <option value="Active">
+
+                            Active
+
+                        </option>
+
+                        <option value="Inactive">
+
+                            Inactive
+
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <button
+                    type="submit"
+                    class="btn btn-success">
+
+                    <i class="bi bi-save"></i>
+
+                    Save Enrollment
+
+                </button>
+
+                <a
+                    href="{{ url_for('student_enrollment.student_enrollments') }}"
+                    class="btn btn-secondary">
+
+                    Back
+
+                </a>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,375 @@
+{% extends "base.html" %}
+
+{% block title %}
+Teacher Management
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h2>
+
+                <i class="bi bi-person-badge-fill"></i>
+
+                Teacher Management
+
+            </h2>
+
+            <p class="text-muted">
+
+                Total Teachers :
+
+                <span class="badge bg-primary">
+
+                    {{ total_teachers }}
+
+                </span>
+
+            </p>
+
+        </div>
+
+        <a href="{{ url_for('teacher.add_teacher') }}"
+           class="btn btn-primary">
+
+            <i class="bi bi-plus-circle"></i>
+
+            Add Teacher
+
+        </a>
+
+    </div>
+
+
+    <div class="card shadow mb-4">
+
+        <div class="card-body">
+
+            <form
+                method="GET"
+                action="{{ url_for('teacher.search_teacher') }}">
+
+                <div class="row">
+
+                    <div class="col-md-5">
+
+                        <input
+                            type="text"
+                            name="keyword"
+                            class="form-control"
+                            placeholder="Search by ID, Name, Email, Phone, Designation"
+                            value="{{ keyword }}">
+
+                    </div>
+
+                    <div class="col-md-4">
+
+                        <select
+                            name="department_id"
+                            class="form-select">
+
+                            <option value="">
+
+                                All Departments
+
+                            </option>
+
+                            {% for department in departments %}
+
+                            <option
+                                value="{{ department.id }}"
+                                {% if department_id|string==department.id|string %}
+                                selected
+                                {% endif %}>
+
+                                {{ department.department_name }} ({{ department.total_teachers }})
+
+                            </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+                   <div class="col-md-3">
+
+    <div class="d-flex gap-2">
+
+        <button
+            type="submit"
+            class="btn btn-success flex-fill">
+
+            <i class="bi bi-search"></i>
+            Search
+
+        </button>
+
+        <a
+            href="{{ url_for('teacher.teachers') }}"
+            class="btn btn-secondary">
+
+            Reset
+
+        </a>
+
+    </div>
+
+</div>
+
+                    </div>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow">
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+
+                <table
+                    class="table table-bordered table-hover align-middle">
+
+                    <thead class="table-dark">
+
+                        <tr>
+
+                            <th>SL</th>
+
+                            <th>Photo</th>
+
+                            <th>Teacher ID</th>
+
+                            <th>Name</th>
+
+                            <th>Department</th>
+
+                            <th>Email</th>
+
+                            <th>Phone</th>
+                                                        <th>Gender</th>
+
+                            <th>Designation</th>
+
+                            <th>Status</th>
+
+                            <th width="160">
+
+                                Action
+
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                    {% if teachers %}
+
+                        {% for teacher in teachers %}
+
+                        <tr>
+
+                            <td>
+
+                                {{ loop.index }}
+
+                            </td>
+
+                            <td>
+
+                                {% if teacher.profile_photo %}
+
+                                <img
+                                    src="{{ url_for('static', filename='uploads/' ~ teacher.profile_photo) }}"
+                                    width="55"
+                                    height="55"
+                                    class="rounded-circle border">
+
+                                {% else %}
+
+                                <img
+                                    src="{{ url_for('static', filename='images/default-user.png') }}"
+                                    width="55"
+                                    height="55"
+                                    class="rounded-circle border">
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+
+                                {{ teacher.teacher_id }}
+
+                            </td>
+
+                            <td>
+
+                                {{ teacher.full_name }}
+
+                            </td>
+
+                            <td>
+
+                                {{ teacher.department_name }}
+
+                            </td>
+
+                            <td>
+
+                                {{ teacher.email }}
+
+                            </td>
+
+                            <td>
+
+                                {{ teacher.phone }}
+
+                            </td>
+
+                            <td>
+
+                                {{ teacher.gender }}
+
+                            </td>
+
+                            <td>
+
+                                {{ teacher.designation }}
+
+                            </td>
+
+                            <td>
+
+                                {% if teacher.status=="Active" %}
+
+                                <span class="badge bg-success">
+
+                                    Active
+
+                                </span>
+
+                                {% else %}
+
+                                <span class="badge bg-danger">
+
+                                    Inactive
+
+                                </span>
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+
+                                <a
+                                    href="{{ url_for('teacher.edit_teacher', id=teacher.id) }}"
+                                    class="btn btn-warning btn-sm">
+
+                                    <i class="bi bi-pencil-square"></i>
+
+                                </a>
+
+                                <a
+                                    href="{{ url_for('teacher.delete_teacher', id=teacher.id) }}"
+                                    class="btn btn-danger btn-sm"
+                                    onclick="return confirm('Delete this teacher?')">
+
+                                    <i class="bi bi-trash"></i>
+
+                                </a>
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    {% else %}
+
+                        <tr>
+
+                            <td colspan="11"
+                                class="text-center text-danger">
+
+                                No Teacher Found
+
+                            </td>
+
+                        </tr>
+
+                    {% endif %}
+
+                    </tbody>
+                                    </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<style>
+
+.table img{
+
+    object-fit:cover;
+
+}
+
+.table td{
+
+    vertical-align:middle;
+
+}
+
+.table th{
+
+    text-align:center;
+
+}
+
+.table td{
+
+    text-align:center;
+
+}
+
+.badge{
+
+    font-size:14px;
+
+}
+
+.card{
+
+    border-radius:12px;
+
+}
+
+.btn{
+
+    border-radius:8px;
+
+}
+
+</style>
+
+{% endblock %}

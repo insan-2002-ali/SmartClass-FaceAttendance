@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtual Environment
+venv/
+.venv/
+
+# Secrets
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# Private data
+uploads/
+face_data/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+venv/
+.venv/
+
+# Environment secrets
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# Uploads and private data
+uploads/
+face_data/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+

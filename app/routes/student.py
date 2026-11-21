@@ -1,71 +1,293 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
-from config import get_db_connection
+from flask import (
+    Blueprint,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    flash
+)
 
-student = Blueprint("student", __name__)
+from werkzeug.utils import secure_filename
+import os
+
+from models.student_model import StudentModel
+from config import Config
+
+student_bp = Blueprint(
+    "student",
+    __name__
+)
 
 
-@student.route("/students")
+@student_bp.route("/students")
 def students():
 
-    if "user_id" not in session:
-        return redirect(url_for("auth.login"))
+    keyword = request.args.get(
+        "keyword",
+        ""
+    ).strip()
 
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    if keyword:
 
-    cursor.execute("SELECT * FROM students ORDER BY id DESC")
+        students = StudentModel.search_students(
+            keyword
+        )
 
-    students = cursor.fetchall()
+    else:
 
-    cursor.close()
-    conn.close()
+        students = StudentModel.get_all_students()
+
+    total_students = StudentModel.count_students()
 
     return render_template(
         "admin/students.html",
-        students=students
+        students=students,
+        keyword=keyword,
+        total_students=total_students
     )
-
-
-@student.route("/students/add", methods=["GET", "POST"])
+@student_bp.route(
+    "/students/add",
+    methods=["GET", "POST"]
+)
 def add_student():
 
-    if "user_id" not in session:
-        return redirect(url_for("auth.login"))
+    programs = StudentModel.get_programs()
+    departments = StudentModel.get_departments()
 
     if request.method == "POST":
 
-        student_id = request.form["student_id"]
-        full_name = request.form["full_name"]
-        department = request.form["department"]
-        semester = request.form["semester"]
-        email = request.form["email"]
-        phone = request.form["phone"]
+        student_id = request.form["student_id"].strip()
+        full_name = request.form["full_name"].strip()
+        email = request.form["email"].strip()
+        phone = request.form["phone"].strip()
+        gender = request.form["gender"]
+        date_of_birth = request.form["date_of_birth"]
+        program_id = request.form["program_id"]
+        department_id = request.form["department_id"]
+        password = request.form["password"]
+        status = request.form["status"]
 
-        conn = get_db_connection()
-        cursor = conn.cursor()
+        profile_photo = ""
 
-        sql = """
-        INSERT INTO students
-        (student_id, full_name, department, semester, email, phone)
-        VALUES (%s,%s,%s,%s,%s,%s)
-        """
+        photo = request.files.get("profile_photo")
 
-        cursor.execute(sql, (
+        if photo and photo.filename:
+
+            filename = secure_filename(photo.filename)
+
+            photo.save(
+                os.path.join(
+                    Config.UPLOAD_FOLDER,
+                    filename
+                )
+            )
+
+            profile_photo = filename
+
+        if StudentModel.student_id_exists(student_id):
+
+            flash(
+                "Student ID already exists.",
+                "danger"
+            )
+
+            return render_template(
+                "admin/add_student.html",
+                programs=programs,
+                departments=departments
+            )
+
+        if StudentModel.email_exists(email):
+
+            flash(
+                "Email already exists.",
+                "danger"
+            )
+
+            return render_template(
+                "admin/add_student.html",
+                programs=programs,
+                departments=departments
+            )
+
+        StudentModel.add_student({
+
+            "student_id": student_id,
+            "full_name": full_name,
+            "email": email,
+            "phone": phone,
+            "gender": gender,
+            "date_of_birth": date_of_birth,
+            "program_id": program_id,
+            "department_id": department_id,
+            "profile_photo": profile_photo,
+            "password": password,
+            "status": status
+
+        })
+
+        flash(
+            "Student added successfully.",
+            "success"
+        )
+
+        return redirect(
+            url_for("student.students")
+        )
+
+    return render_template(
+        "admin/add_student.html",
+        programs=programs,
+        departments=departments
+    )
+@student_bp.route(
+    "/students/edit/<int:id>",
+    methods=["GET", "POST"]
+)
+def edit_student(id):
+
+    student = StudentModel.get_student_by_id(id)
+
+    if not student:
+
+        flash(
+            "Student not found.",
+            "danger"
+        )
+
+        return redirect(
+            url_for("student.students")
+        )
+
+    programs = StudentModel.get_programs()
+
+    departments = StudentModel.get_departments()
+
+    if request.method == "POST":
+
+        student_id = request.form["student_id"].strip()
+
+        full_name = request.form["full_name"].strip()
+
+        email = request.form["email"].strip()
+
+        phone = request.form["phone"].strip()
+
+        gender = request.form["gender"]
+
+        date_of_birth = request.form["date_of_birth"]
+
+        program_id = request.form["program_id"]
+
+        department_id = request.form["department_id"]
+
+        status = request.form["status"]
+
+        profile_photo = student["profile_photo"]
+
+        photo = request.files.get("profile_photo")
+
+        if photo and photo.filename:
+
+            filename = secure_filename(photo.filename)
+
+            photo.save(
+                os.path.join(
+                    Config.UPLOAD_FOLDER,
+                    filename
+                )
+            )
+
+            profile_photo = filename
+
+        if StudentModel.student_id_exists_for_update(
             student_id,
-            full_name,
-            department,
-            semester,
+            id
+        ):
+
+            flash(
+                "Student ID already exists.",
+                "danger"
+            )
+
+            return render_template(
+                "admin/edit_student.html",
+                student=student,
+                programs=programs,
+                departments=departments
+            )
+
+        if StudentModel.email_exists_for_update(
             email,
-            phone
-        ))
+            id
+        ):
 
-        conn.commit()
+            flash(
+                "Email already exists.",
+                "danger"
+            )
 
-        cursor.close()
-        conn.close()
+            return render_template(
+                "admin/edit_student.html",
+                student=student,
+                programs=programs,
+                departments=departments
+            )
 
-        flash("Student Added Successfully", "success")
+        StudentModel.update_student({
 
-        return redirect(url_for("student.students"))
+            "id": id,
+            "student_id": student_id,
+            "full_name": full_name,
+            "email": email,
+            "phone": phone,
+            "gender": gender,
+            "date_of_birth": date_of_birth,
+            "program_id": program_id,
+            "department_id": department_id,
+            "profile_photo": profile_photo,
+            "status": status
 
-    return render_template("admin/add_student.html")
+        })
+
+        flash(
+            "Student updated successfully.",
+            "success"
+        )
+
+        return redirect(
+            url_for("student.students")
+        )
+
+    return render_template(
+        "admin/edit_student.html",
+        student=student,
+        programs=programs,
+        departments=departments
+    )
+@student_bp.route(
+    "/students/delete/<int:id>"
+)
+def delete_student(id):
+
+    student = StudentModel.get_student_by_id(id)
+
+    if not student:
+
+        flash(
+            "Student not found.",
+            "danger"
+        )
+
+    else:
+
+        StudentModel.delete_student(id)
+
+        flash(
+            "Student deleted successfully.",
+            "success"
+        )
+
+    return redirect(
+        url_for("student.students")
+    )

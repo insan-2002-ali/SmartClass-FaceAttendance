@@ -1,180 +1,119 @@
 from config import get_db_connection
-import mysql.connector
 
 
-def add_admission_year(year):
-
-    conn = None
-    cursor = None
-
-    try:
-
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        cursor.execute(
-            """
-            INSERT INTO admission_years (year)
-            VALUES (%s)
-            """,
-            (year,)
-        )
-
-        conn.commit()
-
-        return True, "Admission Year added successfully."
-
-    except mysql.connector.IntegrityError:
-
-        if conn:
-            conn.rollback()
-
-        return False, "Admission Year already exists."
-
-    except mysql.connector.Error as err:
-
-        if conn:
-            conn.rollback()
-
-        return False, str(err)
-
-    finally:
-
-        if cursor:
-            cursor.close()
-
-        if conn and conn.is_connected():
-            conn.close()
-
-
-def get_admission_years():
+def get_all_admission_years():
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    cursor.execute(
-        """
+    cursor.execute("""
         SELECT *
         FROM admission_years
         ORDER BY year DESC
-        """
-    )
+    """)
 
-    years = cursor.fetchall()
+    data = cursor.fetchall()
 
     cursor.close()
     conn.close()
 
-    return years
+    return data
 
 
-def get_admission_year_by_id(year_id):
+def get_admission_year_by_id(admission_year_id):
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    cursor.execute(
-        """
+    cursor.execute("""
         SELECT *
         FROM admission_years
         WHERE id=%s
-        """,
-        (year_id,)
-    )
+    """, (admission_year_id,))
 
-    year = cursor.fetchone()
+    data = cursor.fetchone()
 
     cursor.close()
     conn.close()
 
-    return year
+    return data
 
 
-def update_admission_year(year_id, year, status):
+def add_admission_year(year, status):
 
-    conn = None
-    cursor = None
+    conn = get_db_connection()
+    cursor = conn.cursor()
 
-    try:
+    cursor.execute("""
+        SELECT id
+        FROM admission_years
+        WHERE year=%s
+    """, (year,))
 
-        conn = get_db_connection()
-        cursor = conn.cursor()
+    exists = cursor.fetchone()
 
-        cursor.execute(
-            """
-            UPDATE admission_years
-            SET
-                year=%s,
-                status=%s
-            WHERE id=%s
-            """,
-            (
-                year,
-                status,
-                year_id
-            )
-        )
+    if exists:
 
-        conn.commit()
-
-        return True, "Admission Year updated successfully."
-
-    except mysql.connector.IntegrityError:
-
-        if conn:
-            conn.rollback()
+        cursor.close()
+        conn.close()
 
         return False, "Admission Year already exists."
 
-    except mysql.connector.Error as err:
-
-        if conn:
-            conn.rollback()
-
-        return False, str(err)
-
-    finally:
-
-        if cursor:
-            cursor.close()
-
-        if conn and conn.is_connected():
-            conn.close()
-
-
-def delete_admission_year(year_id):
-
-    conn = None
-    cursor = None
-
-    try:
-
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        cursor.execute(
-            """
-            DELETE FROM admission_years
-            WHERE id=%s
-            """,
-            (year_id,)
+    cursor.execute("""
+        INSERT INTO admission_years
+        (
+            year,
+            status
         )
+        VALUES
+        (
+            %s,
+            %s
+        )
+    """, (year, status))
 
-        conn.commit()
+    conn.commit()
 
-        return True
+    cursor.close()
+    conn.close()
 
-    except mysql.connector.Error:
+    return True, "Admission Year added successfully."
 
-        if conn:
-            conn.rollback()
 
-        return False
+def update_admission_year(admission_year_id, year, status):
 
-    finally:
+    conn = get_db_connection()
+    cursor = conn.cursor()
 
-        if cursor:
-            cursor.close()
+    cursor.execute("""
+        UPDATE admission_years
+        SET
+            year=%s,
+            status=%s
+        WHERE id=%s
+    """, (year, status, admission_year_id))
 
-        if conn and conn.is_connected():
-            conn.close()
+    conn.commit()
+
+    cursor.close()
+    conn.close()
+
+    return True, "Admission Year updated successfully."
+
+
+def delete_admission_year(admission_year_id):
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        DELETE FROM admission_years
+        WHERE id=%s
+    """, (admission_year_id,))
+
+    conn.commit()
+
+    cursor.close()
+    conn.close()
+
+    return True

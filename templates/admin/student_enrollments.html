@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}
+Student Enrollments
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <h2>
+
+            <i class="bi bi-person-check-fill"></i>
+
+            Student Enrollment
+
+        </h2>
+
+        <a
+            href="{{ url_for('student_enrollment.add_student_enrollment') }}"
+            class="btn btn-primary">
+
+            <i class="bi bi-plus-circle"></i>
+
+            Enroll Student
+
+        </a>
+
+    </div>
+
+    <div class="card shadow mb-4">
+
+        <div class="card-body">
+
+            <form method="GET">
+
+                <div class="row">
+
+                    <div class="col-md-10">
+
+                        <input
+                            type="text"
+                            name="keyword"
+                            class="form-control"
+                            placeholder="Search Student / Teacher / Subject"
+                            value="{{ keyword }}">
+
+                    </div>
+
+                    <div class="col-md-2 d-grid">
+
+                        <button
+                            class="btn btn-success">
+
+                            <i class="bi bi-search"></i>
+
+                            Search
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <div class="card shadow">
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+
+                <table class="table table-bordered table-hover">
+
+                    <thead class="table-dark">
+
+                        <tr>
+
+                            <th>SL</th>
+
+                            <th>Student ID</th>
+
+                            <th>Student</th>
+
+                            <th>Teacher</th>
+
+                            <th>Subject</th>
+
+                            <th>Department</th>
+
+                            <th>Year</th>
+
+                            <th>Semester</th>
+
+                            <th>Section</th>
+
+                            <th>Status</th>
+
+                            <th>Action</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                    {% if enrollments %}
+
+                        {% for enrollment in enrollments %}
+
+                        <tr>
+
+                            <td>{{ loop.index }}</td>
+
+                            <td>{{ enrollment.student_id }}</td>
+
+                            <td>{{ enrollment.full_name }}</td>
+
+                            <td>{{ enrollment.teacher_name }}</td>
+
+                            <td>{{ enrollment.subject_name }}</td>
+
+                            <td>{{ enrollment.department_name }}</td>
+
+                            <td>{{ enrollment.year }}</td>
+
+                            <td>{{ enrollment.semester }}</td>
+
+                            <td>{{ enrollment.section }}</td>
+
+                            <td>
+
+                                {% if enrollment.status=="Active" %}
+
+                                <span class="badge bg-success">
+
+                                    Active
+
+                                </span>
+
+                                {% else %}
+
+                                <span class="badge bg-danger">
+
+                                    Inactive
+
+                                </span>
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+
+                                <a
+                                    href="{{ url_for('student_enrollment.edit_student_enrollment', id=enrollment.id) }}"
+                                    class="btn btn-warning btn-sm">
+
+                                    <i class="bi bi-pencil"></i>
+
+                                </a>
+
+                                <a
+                                    href="{{ url_for('student_enrollment.delete_student_enrollment', id=enrollment.id) }}"
+                                    class="btn btn-danger btn-sm"
+                                    onclick="return confirm('Delete Enrollment?')">
+
+                                    <i class="bi bi-trash"></i>
+
+                                </a>
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    {% else %}
+
+                        <tr>
+
+                            <td colspan="11" class="text-center text-danger">
+
+                                No Enrollment Found
+
+                            </td>
+
+                        </tr>
+
+                    {% endif %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
